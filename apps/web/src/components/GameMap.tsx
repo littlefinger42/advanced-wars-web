@@ -20,6 +20,8 @@ const TEAM_COLORS: Record<number, number> = {
   2: 0xef4444,
 };
 
+const NEUTRAL_PROPERTY_COLOR = 0x94a3b8;
+
 interface GameMapProps {
   state: GameState;
   selectedUnit: Unit | null;
@@ -54,12 +56,14 @@ export default function GameMap({
     app.renderer.resize(w, h);
 
     const tileLayer = app.stage.getChildByLabel("tileLayer") as Container;
+    const propertyLayer = app.stage.getChildByLabel("propertyLayer") as Container;
     const overlayLayer = app.stage.getChildByLabel("overlayLayer") as Container;
     const unitLayer = app.stage.getChildByLabel("unitLayer") as Container;
 
-    if (!tileLayer || !overlayLayer || !unitLayer) return;
+    if (!tileLayer || !propertyLayer || !overlayLayer || !unitLayer) return;
 
     tileLayer.removeChildren();
+    propertyLayer.removeChildren();
     overlayLayer.removeChildren();
     unitLayer.removeChildren();
 
@@ -73,6 +77,18 @@ export default function GameMap({
 
         const tileGraphic = new Graphics().rect(x * tileSize, y * tileSize, tileSize, tileSize).fill(color);
         tileLayer.addChild(tileGraphic);
+
+        if (tile.property) {
+          const propColor = tile.owner ? TEAM_COLORS[tile.owner] ?? 0x888888 : NEUTRAL_PROPERTY_COLOR;
+          const cx = x * tileSize + tileSize / 2;
+          const cy = y * tileSize + tileSize / 2;
+          const size = tileSize * 0.5;
+          const building = new Graphics()
+            .rect(cx - size / 2, cy - size / 2, size, size)
+            .fill(propColor)
+            .stroke({ width: 2, color: 0x1e293b });
+          propertyLayer.addChild(building);
+        }
 
         const key = y * map.width + x;
         if (reachSet.has(key) && !attackSet.has(`${x},${y}`)) {
@@ -136,6 +152,9 @@ export default function GameMap({
 
       const tileLayer = new Container({ label: "tileLayer" });
       app.stage.addChild(tileLayer);
+
+      const propertyLayer = new Container({ label: "propertyLayer" });
+      app.stage.addChild(propertyLayer);
 
       const overlayLayer = new Container({ label: "overlayLayer" });
       app.stage.addChild(overlayLayer);
