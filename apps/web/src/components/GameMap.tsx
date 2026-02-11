@@ -128,8 +128,9 @@ export default function GameMap({
       initCompleted = true;
 
       if (unmounted) {
+        const canvas = app.canvas;
         app.destroy(true, { children: true });
-        if (container.contains(app.canvas)) container.removeChild(app.canvas);
+        if (canvas && container.contains(canvas)) container.removeChild(canvas);
         return;
       }
 
@@ -164,10 +165,11 @@ export default function GameMap({
       unmounted = true;
 
       if (initCompleted) {
+        const canvas = app.canvas;
         app.destroy(true, { children: true });
         appRef.current = null;
-        if (container.contains(app.canvas)) {
-          container.removeChild(app.canvas);
+        if (canvas && container.contains(canvas)) {
+          container.removeChild(canvas);
         }
       }
     };
