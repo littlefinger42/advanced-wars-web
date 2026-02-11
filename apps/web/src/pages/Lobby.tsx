@@ -1,25 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styles from './Lobby.module.css'
+import { Button, Input, Alert, Typography } from 'antd'
+import PageLayout from '../components/layout/PageLayout'
 
 export default function Lobby() {
   const navigate = useNavigate()
   const [roomCode, setRoomCode] = useState('')
   const [error, setError] = useState('')
 
-  const handleCreate = async () => {
-    try {
-      const res = await fetch('/api/rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      })
-      if (!res.ok) throw new Error('Failed to create room')
-      const data = await res.json()
-      navigate(`/game/${data.roomCode}`)
-    } catch {
-      navigate('/game/local')
-    }
+  const handleCreate = () => {
+    navigate('/map-select?mode=create')
   }
 
   const handleJoin = (e: React.FormEvent) => {
@@ -34,37 +24,47 @@ export default function Lobby() {
   }
 
   return (
-    <div className={styles.lobby}>
-      <h1>Advance Wars 2</h1>
-      <p className={styles.subtitle}>Turn-based tactical warfare</p>
+    <PageLayout>
+      <Typography.Title level={2} style={{ color: '#eee', margin: '0 0 4px' }}>
+        Advance Wars 2
+      </Typography.Title>
+      <Typography.Text style={{ color: '#94a3b8', marginBottom: 16, display: 'block' }}>
+        Turn-based tactical warfare
+      </Typography.Text>
 
-      <div className={styles.actions}>
-        <button className={styles.primary} onClick={handleCreate}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 320 }}>
+        <Button type="primary" size="large" block onClick={handleCreate}>
           Create Game
-        </button>
+        </Button>
 
-        <form onSubmit={handleJoin} className={styles.joinForm}>
-          <input
-            type="text"
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-            placeholder="Room code"
-            maxLength={6}
-            className={styles.input}
-          />
-          <button type="submit" className={styles.secondary}>
-            Join Game
-          </button>
+        <form onSubmit={handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <Input
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+              placeholder="Room code"
+              maxLength={6}
+              size="large"
+              style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}
+            />
+          <Button type="default" htmlType="submit" size="large" block>
+              Join Game
+            </Button>
+          {error && (
+            <Alert message={error} type="error" showIcon style={{ marginBottom: 8 }} />
+          )}
         </form>
-        {error && <p className={styles.error}>{error}</p>}
-      </div>
 
-      <button
-        className={styles.local}
-        onClick={() => navigate('/game/local')}
-      >
-        Local Play (Single Device)
-      </button>
-    </div>
+        <Button
+          type="default"
+          ghost
+          size="large"
+          block
+          onClick={() => navigate('/map-select?mode=local')}
+          style={{ marginTop: 32, borderColor: '#475569', color: '#94a3b8' }}
+        >
+          Local Play (Single Device)
+        </Button>
+      </div>
+    </PageLayout>
   )
 }

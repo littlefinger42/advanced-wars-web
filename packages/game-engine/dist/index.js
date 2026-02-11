@@ -7,3 +7,4 @@ export * from './movement.js';
 export * from './combat.js';
 export * from './GameEngine.js';
 export * from './maps.js';
+export { parseTiledMap } from './tiled/parser.js';

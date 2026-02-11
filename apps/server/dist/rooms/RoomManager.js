@@ -1,5 +1,5 @@
 import { GameEngine } from 'game-engine';
-import { createTestMapWithUnits } from 'game-engine';
+import { getMap } from '../maps.js';
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function generateRoomCode() {
     let code = '';
@@ -9,12 +9,15 @@ function generateRoomCode() {
     return code;
 }
 const rooms = new Map();
-export function createRoom() {
+export function createRoom(mapId) {
     let code;
     do {
         code = generateRoomCode();
     } while (rooms.has(code));
-    const { map, units } = createTestMapWithUnits();
+    const data = mapId ? getMap(mapId) : getMap('smallSkirmish');
+    if (!data)
+        throw new Error('No map available');
+    const { map, units } = data;
     const game = new GameEngine(map, units);
     const room = {
         code,

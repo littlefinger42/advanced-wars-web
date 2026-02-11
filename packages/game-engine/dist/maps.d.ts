@@ -1,8 +1,3 @@
-import type { MapData, Unit } from './types.js';
-export declare function createTestMap(): MapData;
-export declare function createSmallMap(): MapData;
-export declare function createTestMapWithUnits(): {
-    map: MapData;
-    units: Unit[];
-};
+/** Map utilities - map data now comes from Tiled JSON via parseTiledMap */
+export {};
 //# sourceMappingURL=maps.d.ts.map

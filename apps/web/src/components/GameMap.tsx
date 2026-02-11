@@ -1,16 +1,33 @@
-import { useRef, useEffect, useCallback } from 'react'
-import type { GameState, Unit } from 'game-engine'
-import { drawTerrain, drawUnit } from '../lib/pixelSprites'
-import styles from './GameMap.module.css'
+import { useRef, useEffect, useCallback } from "react";
+import type { GameState, Unit } from "game-engine";
+import { Flex } from "antd";
+import { Application, Graphics, Container } from "pixi.js";
+
+const TERRAIN_COLORS: Record<string, number> = {
+  plain: 0x84cc16,
+  mountain: 0x78716c,
+  woods: 0x166534,
+  river: 0x0369a1,
+  road: 0x6b7280,
+  sea: 0x075985,
+  shoal: 0xfcd34d,
+  reef: 0x64748b,
+  pipe: 0x475569,
+};
+
+const TEAM_COLORS: Record<number, number> = {
+  1: 0x3b82f6,
+  2: 0xef4444,
+};
 
 interface GameMapProps {
-  state: GameState
-  selectedUnit: Unit | null
-  reachable: Map<number, number>
-  attackable: { x: number; y: number }[]
-  tileSize: number
-  onTapTile: (x: number, y: number) => void
-  onSelectUnit: (unit: Unit | null) => void
+  state: GameState;
+  selectedUnit: Unit | null;
+  reachable: Map<number, number>;
+  attackable: { x: number; y: number }[];
+  tileSize: number;
+  onTapTile: (x: number, y: number) => void;
+  onSelectUnit: (unit: Unit | null) => void;
 }
 
 export default function GameMap({
@@ -21,117 +38,156 @@ export default function GameMap({
   tileSize,
   onTapTile,
 }: GameMapProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const appRef = useRef<Application | null>(null);
+  const onTapTileRef = useRef(onTapTile);
+  onTapTileRef.current = onTapTile;
 
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+  const render = useCallback(() => {
+    const app = appRef.current;
+    if (!app) return;
 
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const { map, units } = state;
+    const w = map.width * tileSize;
+    const h = map.height * tileSize;
 
-    const { map, units } = state
-    const w = map.width * tileSize
-    const h = map.height * tileSize
+    app.renderer.resize(w, h);
 
-    canvas.width = w
-    canvas.height = h
+    const tileLayer = app.stage.getChildByLabel("tileLayer") as Container;
+    const overlayLayer = app.stage.getChildByLabel("overlayLayer") as Container;
+    const unitLayer = app.stage.getChildByLabel("unitLayer") as Container;
 
-    const attackSet = new Set(attackable.map((t) => `${t.x},${t.y}`))
-    const reachSet = new Set(reachable.keys())
+    if (!tileLayer || !overlayLayer || !unitLayer) return;
+
+    tileLayer.removeChildren();
+    overlayLayer.removeChildren();
+    unitLayer.removeChildren();
+
+    const attackSet = new Set(attackable.map((t) => `${t.x},${t.y}`));
+    const reachSet = new Set(reachable.keys());
 
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
-        const tile = map.tiles[y][x]
-        const key = y * map.width + x
+        const tile = map.tiles[y][x];
+        const color = TERRAIN_COLORS[tile.terrain] ?? TERRAIN_COLORS.plain;
 
-        drawTerrain(
-          ctx,
-          {
-            terrain: tile.terrain,
-            property: tile.property,
-            owner: tile.owner,
-          },
-          x,
-          y,
-          tileSize
-        )
+        const tileGraphic = new Graphics().rect(x * tileSize, y * tileSize, tileSize, tileSize).fill(color);
+        tileLayer.addChild(tileGraphic);
 
+        const key = y * map.width + x;
         if (reachSet.has(key) && !attackSet.has(`${x},${y}`)) {
-          ctx.fillStyle = 'rgba(59, 130, 246, 0.4)'
-          ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize)
+          const overlay = new Graphics()
+            .rect(x * tileSize, y * tileSize, tileSize, tileSize)
+            .fill({ color: 0x3b82f6, alpha: 0.4 });
+          overlayLayer.addChild(overlay);
         }
         if (attackSet.has(`${x},${y}`)) {
-          ctx.fillStyle = 'rgba(239, 68, 68, 0.5)'
-          ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize)
+          const overlay = new Graphics()
+            .rect(x * tileSize, y * tileSize, tileSize, tileSize)
+            .fill({ color: 0xef4444, alpha: 0.5 });
+          overlayLayer.addChild(overlay);
         }
       }
     }
 
     for (const unit of units) {
-      const isImmobile = unit.hasMoved
-      drawUnit(
-        ctx,
-        unit,
-        unit.x,
-        unit.y,
-        tileSize,
-        selectedUnit?.id === unit.id,
-        isImmobile
-      )
+      const teamColor = TEAM_COLORS[unit.player] ?? 0x888888;
+      const cx = unit.x * tileSize + tileSize / 2;
+      const cy = unit.y * tileSize + tileSize / 2;
+      const radius = tileSize * 0.35;
+
+      const unitGraphic = new Graphics()
+        .circle(cx, cy, radius)
+        .fill({ color: teamColor, alpha: unit.hasMoved ? 0.6 : 1 });
+      if (selectedUnit?.id === unit.id) {
+        unitGraphic.circle(cx, cy, radius + 2).stroke({ width: 2, color: 0xffffff });
+      }
+      unitLayer.addChild(unitGraphic);
     }
-  }, [state, reachable, attackable, tileSize, selectedUnit])
+  }, [state, reachable, attackable, tileSize, selectedUnit]);
 
   useEffect(() => {
-    draw()
-  }, [draw])
+    if (!containerRef.current) return;
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    const container = containerRef.current;
+    const app = new Application();
+    const w = state.map.width * tileSize;
+    const h = state.map.height * tileSize;
 
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
+    let initCompleted = false;
+    let unmounted = false;
 
-    const x = Math.floor(((e.clientX - rect.left) * scaleX) / tileSize)
-    const y = Math.floor(((e.clientY - rect.top) * scaleY) / tileSize)
+    const init = async () => {
+      await app.init({
+        width: w,
+        height: h,
+        backgroundColor: 0x0f172a,
+        antialias: true,
+      });
 
-    if (x >= 0 && x < state.map.width && y >= 0 && y < state.map.height) {
-      onTapTile(x, y)
-    }
-  }
+      initCompleted = true;
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    e.preventDefault()
-    const touch = e.changedTouches[0]
-    if (!touch) return
+      if (unmounted) {
+        app.destroy(true, { children: true });
+        if (container.contains(app.canvas)) container.removeChild(app.canvas);
+        return;
+      }
 
-    const canvas = canvasRef.current
-    if (!canvas) return
+      const tileLayer = new Container({ label: "tileLayer" });
+      app.stage.addChild(tileLayer);
 
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
+      const overlayLayer = new Container({ label: "overlayLayer" });
+      app.stage.addChild(overlayLayer);
 
-    const x = Math.floor(((touch.clientX - rect.left) * scaleX) / tileSize)
-    const y = Math.floor(((touch.clientY - rect.top) * scaleY) / tileSize)
+      const unitLayer = new Container({ label: "unitLayer" });
+      app.stage.addChild(unitLayer);
 
-    if (x >= 0 && x < state.map.width && y >= 0 && y < state.map.height) {
-      onTapTile(x, y)
-    }
-  }
+      app.stage.eventMode = "static";
+      app.stage.hitArea = app.screen;
+      app.stage.on("pointerdown", (e) => {
+        const pos = e.global;
+        const x = Math.floor(pos.x / tileSize);
+        const y = Math.floor(pos.y / tileSize);
+        if (x >= 0 && x < state.map.width && y >= 0 && y < state.map.height) {
+          onTapTileRef.current(x, y);
+        }
+      });
+
+      container.appendChild(app.canvas);
+      appRef.current = app;
+      render();
+    };
+
+    init();
+
+    return () => {
+      unmounted = true;
+
+      if (initCompleted) {
+        app.destroy(true, { children: true });
+        appRef.current = null;
+        if (container.contains(app.canvas)) {
+          container.removeChild(app.canvas);
+        }
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    render();
+  }, [render]);
 
   return (
-    <div
+    <Flex
       ref={containerRef}
-      className={styles.map}
-      onClick={handleClick}
-      onTouchEnd={handleTouchEnd}
-      style={{ touchAction: 'manipulation' }}
-    >
-      <canvas ref={canvasRef} className={styles.canvas} />
-    </div>
-  )
+      style={{
+        touchAction: "manipulation",
+        minWidth: "100%",
+        minHeight: "100%",
+        cursor: "pointer",
+        borderRadius: 4,
+        overflow: "hidden",
+      }}
+    />
+  );
 }

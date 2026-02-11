@@ -1,6 +1,6 @@
 import { getUnitDefinition } from 'game-engine'
 import type { Unit } from 'game-engine'
-import styles from './UnitPanel.module.css'
+import { Card, Button, Descriptions, Typography } from 'antd'
 
 interface UnitPanelProps {
   unit: Unit | null
@@ -11,32 +11,61 @@ interface UnitPanelProps {
 }
 
 export default function UnitPanel({ unit, funds, canCapture, onClose, onCapture }: UnitPanelProps) {
-  if (!unit) return null
+  if (!unit) {
+    return (
+      <Card
+        title="Unit"
+        style={{ width: 240, flexShrink: 0, height: 'fit-content' }}
+        styles={{ body: { textAlign: 'center', color: 'rgba(255,255,255,0.45)' } }}
+      >
+        <Typography.Text>Select a unit to view details</Typography.Text>
+      </Card>
+    )
+  }
 
   const def = getUnitDefinition(unit.type)
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.header}>
-        <h3>{def?.name ?? unit.type}</h3>
-        <button className={styles.close} onClick={onClose}>
+    <Card
+      title={def?.name ?? unit.type}
+      extra={
+        <Button type="text" size="small" onClick={onClose}>
           ×
-        </button>
-      </div>
-      <div className={styles.stats}>
-        <div>HP: {unit.hp}/10</div>
-        {def && def.ammo > 0 && <div>Ammo: {unit.ammo}/{def.ammo}</div>}
-        {def && <div>Movement: {def.movementType}</div>}
-        {def && <div>Cost: ${def.cost}</div>}
-      </div>
+        </Button>
+      }
+      style={{ width: 240, flexShrink: 0, height: 'fit-content' }}
+      styles={{ body: { paddingTop: 16 } }}
+    >
+      <Descriptions column={1} size="small">
+        <Descriptions.Item label="HP">{unit.hp}/10</Descriptions.Item>
+        {def && def.ammo > 0 && (
+          <Descriptions.Item label="Ammo">
+            {unit.ammo}/{def.ammo}
+          </Descriptions.Item>
+        )}
+        {def && (
+          <Descriptions.Item label="Movement">{def.movementType}</Descriptions.Item>
+        )}
+        {def && (
+          <Descriptions.Item label="Cost">${def.cost}</Descriptions.Item>
+        )}
+      </Descriptions>
       {canCapture && onCapture && (
-        <button className={styles.capture} onClick={onCapture}>
+        <Button type="primary" block size="large" onClick={onCapture} style={{ marginTop: 16 }}>
           Capture
-        </button>
+        </Button>
       )}
-      <div className={styles.funds}>
+      <Typography.Text
+        strong
+        style={{
+          display: 'block',
+          marginTop: 16,
+          paddingTop: 12,
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
         Funds: ${funds}
-      </div>
-    </div>
+      </Typography.Text>
+    </Card>
   )
 }

@@ -1,50 +1,55 @@
-import { getUnitDefinition, getUnitsProducibleAt } from 'game-engine'
-import styles from './ProductionPanel.module.css'
+import { getUnitDefinition, getUnitsProducibleAt } from "game-engine";
+import { Card, Button, Typography, Space, Flex } from "antd";
 
 interface ProductionPanelProps {
-  propertyType: string
-  x: number
-  y: number
-  funds: number
-  onProduce: (unitType: string) => void
-  onClose: () => void
+  propertyType: string;
+  x: number;
+  y: number;
+  funds: number;
+  onProduce: (unitType: string) => void;
 }
 
 export default function ProductionPanel({
   propertyType,
   funds,
   onProduce,
-  onClose,
 }: ProductionPanelProps) {
-  const unitTypes = getUnitsProducibleAt(propertyType)
+  const unitTypes = getUnitsProducibleAt(propertyType);
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.header}>
-        <h3>Produce Unit</h3>
-        <button className={styles.close} onClick={onClose}>
-          ×
-        </button>
-      </div>
-      <div className={styles.units}>
+    <Card title="Produce Unit" style={{ width: "300px" }}>
+      <Space direction="vertical" style={{ width: "100%" }} size="middle">
         {unitTypes.map((type) => {
-          const def = getUnitDefinition(type)
-          if (!def) return null
-          const canAfford = funds >= def.cost
+          const def = getUnitDefinition(type);
+          if (!def) return null;
+          const canAfford = funds >= def.cost;
           return (
-            <button
+            <Button
               key={type}
-              className={styles.unitButton}
-              onClick={() => canAfford && onProduce(type)}
+              block
+              size="large"
               disabled={!canAfford}
+              onClick={() => canAfford && onProduce(type)}
             >
-              <span>{def.name}</span>
-              <span>${def.cost}</span>
-            </button>
-          )
+              <Flex justify="space-between" style={{ width: "100%" }}>
+                <span>{def.name}</span>
+                <span>${def.cost}</span>
+              </Flex>
+            </Button>
+          );
         })}
-      </div>
-      <div className={styles.funds}>Funds: ${funds}</div>
-    </div>
-  )
+      </Space>
+      <Typography.Text
+        strong
+        style={{
+          display: "block",
+          marginTop: 16,
+          paddingTop: 12,
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        Funds: ${funds}
+      </Typography.Text>
+    </Card>
+  );
 }

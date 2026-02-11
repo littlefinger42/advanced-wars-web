@@ -1,0 +1,86 @@
+{
+  "compressionlevel": -1,
+  "height": 8,
+  "infinite": false,
+  "layers": [
+    {
+      "data": [
+        1,1,1,1,2,2,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,2,2,1,1,1,1
+      ],
+      "height": 8,
+      "id": 1,
+      "name": "terrain",
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 10,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 2,
+      "name": "properties",
+      "objects": [
+        {"id": 1, "x": 32, "y": 32, "width": 32, "height": 32, "properties": [{"name": "type", "value": "hq"}, {"name": "owner", "value": 1}]},
+        {"id": 2, "x": 64, "y": 32, "width": 32, "height": 32, "properties": [{"name": "type", "value": "city"}, {"name": "owner", "value": 1}]},
+        {"id": 3, "x": 64, "y": 0, "width": 32, "height": 32, "properties": [{"name": "type", "value": "base"}, {"name": "owner", "value": 1}]},
+        {"id": 4, "x": 32, "y": 0, "width": 32, "height": 32, "properties": [{"name": "type", "value": "city"}, {"name": "owner", "value": 1}]},
+        {"id": 5, "x": 192, "y": 192, "width": 32, "height": 32, "properties": [{"name": "type", "value": "hq"}, {"name": "owner", "value": 2}]},
+        {"id": 6, "x": 160, "y": 192, "width": 32, "height": 32, "properties": [{"name": "type", "value": "city"}, {"name": "owner", "value": 2}]},
+        {"id": 7, "x": 224, "y": 160, "width": 32, "height": 32, "properties": [{"name": "type", "value": "base"}, {"name": "owner", "value": 2}]},
+        {"id": 8, "x": 224, "y": 224, "width": 32, "height": 32, "properties": [{"name": "type", "value": "city"}, {"name": "owner", "value": 2}]},
+        {"id": 9, "x": 96, "y": 96, "width": 32, "height": 32, "properties": [{"name": "type", "value": "city"}]},
+        {"id": 10, "x": 160, "y": 96, "width": 32, "height": 32, "properties": [{"name": "type", "value": "city"}]},
+        {"id": 11, "x": 128, "y": 160, "width": 32, "height": 32, "properties": [{"name": "type", "value": "city"}]}
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 3,
+      "name": "units",
+      "objects": [
+        {"id": 10, "x": 32, "y": 64, "width": 0, "height": 0, "name": "p1-inf-1", "properties": [{"name": "unitType", "value": "infantry"}, {"name": "player", "value": 1}]},
+        {"id": 11, "x": 0, "y": 64, "width": 0, "height": 0, "name": "p1-tank-1", "properties": [{"name": "unitType", "value": "tank"}, {"name": "player", "value": 1}]},
+        {"id": 12, "x": 64, "y": 32, "width": 0, "height": 0, "name": "p1-recon-1", "properties": [{"name": "unitType", "value": "recon"}, {"name": "player", "value": 1}]},
+        {"id": 13, "x": 192, "y": 160, "width": 0, "height": 0, "name": "p2-inf-1", "properties": [{"name": "unitType", "value": "infantry"}, {"name": "player", "value": 2}]},
+        {"id": 14, "x": 224, "y": 160, "width": 0, "height": 0, "name": "p2-tank-1", "properties": [{"name": "unitType", "value": "tank"}, {"name": "player", "value": 2}]},
+        {"id": 15, "x": 192, "y": 192, "width": 0, "height": 0, "name": "p2-recon-1", "properties": [{"name": "unitType", "value": "recon"}, {"name": "player", "value": 2}]}
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "nextlayerid": 4,
+  "nextobjectid": 16,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tiledversion": "1.11.0",
+  "tileheight": 32,
+  "tilesets": [
+    {
+      "firstgid": 1,
+      "name": "terrain",
+      "tileheight": 32,
+      "tilewidth": 32,
+      "tilecount": 3,
+      "tiles": [
+        {"id": 0, "properties": [{"name": "terrain", "value": "plain"}]},
+        {"id": 1, "properties": [{"name": "terrain", "value": "river"}]}
+      ]
+    }
+  ],
+  "tilewidth": 32,
+  "type": "map",
+  "version": "1.11",
+  "width": 10,
+  "properties": [{"name": "name", "value": "Twin River"}]
+}

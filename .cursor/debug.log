@@ -1,0 +1,5 @@
+{"location":"GameMap.tsx:cleanup","message":"cleanup running","data":{"initCompleted":false,"unmounted":true},"timestamp":1770840951975,"hypothesisId":"A"}
+{"location":"GameMap.tsx:init","message":"init completed","data":{"initCompleted":true,"unmounted":true},"timestamp":1770840951991,"hypothesisId":"A"}
+{"location":"GameMap.tsx:init","message":"init completed","data":{"initCompleted":true,"unmounted":false},"timestamp":1770840951998,"hypothesisId":"A"}
+{"location":"GameMap.tsx:cleanup","message":"cleanup running","data":{"initCompleted":true,"unmounted":true},"timestamp":1770840969040,"hypothesisId":"A"}
+{"location":"GameMap.tsx:cleanup","message":"cleanup running","data":{"initCompleted":false,"unmounted":true},"timestamp":1770840969045,"hypothesisId":"A"}
