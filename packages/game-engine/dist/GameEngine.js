@@ -1,11 +1,11 @@
-import { resolveCombat } from './combat.js';
-import { getReachableTiles, getAttackableTiles } from './movement.js';
-import { getUnitDefinition, getUnitsProducibleAt } from './units.js';
-import { canAttack } from './damageTable.js';
+import { resolveCombat } from "./combat.js";
+import { getReachableTiles, getAttackableTiles, getPath, getAttackableTilesFromPosition, } from "./movement.js";
+import { getUnitDefinition, getUnitsProducibleAt } from "./units.js";
+import { canAttack } from "./damageTable.js";
 function uuid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
         const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
         return v.toString(16);
     });
 }
@@ -19,7 +19,7 @@ export class GameEngine {
         for (let y = 0; y < map.height; y++) {
             for (let x = 0; x < map.width; x++) {
                 const tile = map.tiles[y][x];
-                if (tile.owner && tile.property === 'city') {
+                if (tile.owner && tile.property === "city") {
                     funds[tile.owner] = (funds[tile.owner] ?? 0) + INCOME_PER_CITY;
                 }
             }
@@ -31,9 +31,9 @@ export class GameEngine {
             turn: 1,
             funds,
             day: 1,
-            weather: 'clear',
+            weather: "clear",
             winner: null,
-            phase: 'move',
+            phase: "move",
         };
     }
     getState() {
@@ -51,11 +51,12 @@ export class GameEngine {
             for (let y = 0; y < this.state.map.height; y++) {
                 for (let x = 0; x < this.state.map.width; x++) {
                     const tile = this.state.map.tiles[y][x];
-                    if (tile.owner === p && tile.property === 'city')
+                    if (tile.owner === p && tile.property === "city")
                         cities++;
                 }
             }
-            this.state.funds[p] = (this.state.funds[p] ?? 0) + cities * INCOME_PER_CITY;
+            this.state.funds[p] =
+                (this.state.funds[p] ?? 0) + cities * INCOME_PER_CITY;
         }
     }
     resetUnitFlags() {
@@ -74,23 +75,23 @@ export class GameEngine {
             this.state.day++;
             this.processIncome();
         }
-        this.state.phase = 'move';
+        this.state.phase = "move";
     }
     validateMove(unitId, x, y) {
         const unit = this.state.units.find((u) => u.id === unitId);
         if (!unit)
-            return 'Unit not found';
+            return "Unit not found";
         if (unit.player !== this.state.currentPlayer)
-            return 'Not your turn';
+            return "Not your turn";
         if (unit.hasMoved)
-            return 'Unit already moved';
+            return "Unit already moved";
         const reachable = getReachableTiles(this.state.map, unit, this.state.units, this.state.weather);
         const key = y * this.state.map.width + x;
         if (!reachable.has(key))
-            return 'Tile not reachable';
+            return "Tile not reachable";
         const existing = this.getUnitAt(x, y);
         if (existing)
-            return 'Tile occupied';
+            return "Tile occupied";
         return null;
     }
     move(unitId, x, y) {
@@ -107,23 +108,22 @@ export class GameEngine {
         const attacker = this.state.units.find((u) => u.id === attackerId);
         const defender = this.state.units.find((u) => u.id === defenderId);
         if (!attacker || !defender)
-            return 'Unit not found';
+            return "Unit not found";
         if (attacker.player !== this.state.currentPlayer)
-            return 'Not your turn';
+            return "Not your turn";
         if (attacker.player === defender.player)
-            return 'Cannot attack own unit';
+            return "Cannot attack own unit";
         if (attacker.hasAttacked)
-            return 'Unit already attacked';
+            return "Unit already attacked";
         const def = getUnitDefinition(attacker.type);
         if (!def || !canAttack(attacker.type, defender.type))
-            return 'Cannot attack this unit';
+            return "Cannot attack this unit";
         if (def.ammo > 0 && attacker.ammo <= 0)
-            return 'No ammo';
-        const reachable = getReachableTiles(this.state.map, attacker, this.state.units, this.state.weather);
+            return "No ammo";
         const attackable = getAttackableTiles(this.state.map, attacker, this.state.units);
         const canAttackPos = attackable.some((t) => t.x === defender.x && t.y === defender.y);
         if (!canAttackPos)
-            return 'Target out of range';
+            return "Target out of range";
         return null;
     }
     attack(attackerId, defenderId) {
@@ -132,6 +132,7 @@ export class GameEngine {
             return err;
         const attacker = this.state.units.find((u) => u.id === attackerId);
         const defender = this.state.units.find((u) => u.id === defenderId);
+        console.log({ attacker, defender });
         const result = resolveCombat(this.state, attacker, defender);
         attacker.hp = result.attackerHpAfter;
         if (attacker.hp <= 0) {
@@ -151,19 +152,19 @@ export class GameEngine {
     validateCapture(unitId) {
         const unit = this.state.units.find((u) => u.id === unitId);
         if (!unit)
-            return 'Unit not found';
+            return "Unit not found";
         if (unit.player !== this.state.currentPlayer)
-            return 'Not your turn';
+            return "Not your turn";
         if (unit.hasAttacked)
-            return 'Unit already acted';
+            return "Unit already acted";
         const def = getUnitDefinition(unit.type);
         if (!def || !def.canCapture)
-            return 'Unit cannot capture';
+            return "Unit cannot capture";
         const tile = this.state.map.tiles[unit.y]?.[unit.x];
-        if (!tile || !tile.property || tile.property === 'hq')
-            return 'Nothing to capture';
+        if (!tile || !tile.property || tile.property === "hq")
+            return "Nothing to capture";
         if (tile.owner === unit.player)
-            return 'Already yours';
+            return "Already yours";
         return null;
     }
     capture(unitId) {
@@ -184,22 +185,22 @@ export class GameEngine {
     validateProduce(propertyX, propertyY, unitType) {
         const tile = this.state.map.tiles[propertyY]?.[propertyX];
         if (!tile || !tile.property)
-            return 'Not a property';
+            return "Not a property";
         if (tile.owner !== this.state.currentPlayer)
-            return 'Not your property';
+            return "Not your property";
         const producible = getUnitsProducibleAt(tile.property);
         if (!producible.includes(unitType))
-            return 'Cannot produce this unit here';
+            return "Cannot produce this unit here";
         const def = getUnitDefinition(unitType);
         if (!def)
-            return 'Invalid unit type';
+            return "Invalid unit type";
         const cost = def.cost;
         const funds = this.state.funds[this.state.currentPlayer] ?? 0;
         if (funds < cost)
-            return 'Insufficient funds';
+            return "Insufficient funds";
         const existing = this.getUnitAt(propertyX, propertyY);
         if (existing)
-            return 'Property occupied';
+            return "Property occupied";
         return null;
     }
     produce(propertyX, propertyY, unitType) {
@@ -214,7 +215,7 @@ export class GameEngine {
             player: this.state.currentPlayer,
             x: propertyX,
             y: propertyY,
-            hp: 10,
+            hp: 100,
             ammo: def.ammo,
             fuel: def.fuel,
             hasMoved: true,
@@ -225,19 +226,19 @@ export class GameEngine {
     }
     processAction(action) {
         switch (action.type) {
-            case 'move':
+            case "move":
                 return this.move(action.unitId, action.x, action.y);
-            case 'attack':
+            case "attack":
                 return this.attack(action.attackerId, action.defenderId);
-            case 'capture':
+            case "capture":
                 return this.capture(action.unitId);
-            case 'produce':
+            case "produce":
                 return this.produce(action.propertyX, action.propertyY, action.unitType);
-            case 'end_turn':
+            case "end_turn":
                 this.endTurn();
                 return null;
             default:
-                return 'Unknown action';
+                return "Unknown action";
         }
     }
     checkWinCondition() {
@@ -248,7 +249,7 @@ export class GameEngine {
         for (let y = 0; y < this.state.map.height; y++) {
             for (let x = 0; x < this.state.map.width; x++) {
                 const t = this.state.map.tiles[y][x];
-                if (t.property === 'hq') {
+                if (t.property === "hq") {
                     if (t.owner === 1)
                         p1Hq = true;
                     if (t.owner === 2)
@@ -266,5 +267,11 @@ export class GameEngine {
     }
     getAttackableTiles(unit) {
         return getAttackableTiles(this.state.map, unit, this.state.units);
+    }
+    getPath(unit, destX, destY) {
+        return getPath(this.state.map, unit, this.state.units, destX, destY, this.state.weather);
+    }
+    getAttackableTilesFromPosition(unit, fromX, fromY) {
+        return getAttackableTilesFromPosition(this.state.map, unit, fromX, fromY, this.state.units);
     }
 }

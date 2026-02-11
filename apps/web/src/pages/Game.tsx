@@ -29,6 +29,12 @@ export default function Game() {
   } | null>(null);
   const [reachable, setReachable] = useState<Map<number, number>>(new Map());
   const [attackable, setAttackable] = useState<{ x: number; y: number }[]>([]);
+  const [movePreview, setMovePreview] = useState<{
+    destination: { x: number; y: number };
+    unit: Unit;
+    path: { x: number; y: number }[];
+    enemiesFromDest: Unit[];
+  } | null>(null);
 
   const initGame = useCallback(
     (mapData: { map: import("game-engine").MapData; units: Unit[] }) => {
@@ -39,6 +45,7 @@ export default function Game() {
       setSelectedUnit(null);
       setReachable(new Map());
       setAttackable([]);
+      setMovePreview(null);
     },
     [],
   );
@@ -70,10 +77,12 @@ export default function Game() {
         .catch(() => {
           fetch("/api/maps/smallSkirmish")
             .then((r) => r.json())
-            .then((data: { map: import("game-engine").MapData; units: Unit[] }) => {
-              mapIdRef.current = "smallSkirmish";
-              initGame(data);
-            })
+            .then(
+              (data: { map: import("game-engine").MapData; units: Unit[] }) => {
+                mapIdRef.current = "smallSkirmish";
+                initGame(data);
+              },
+            )
             .catch(() => {});
         });
     },
@@ -83,7 +92,8 @@ export default function Game() {
   useEffect(() => {
     if (roomCode !== "local") return;
 
-    const mapId = (location.state as { mapId?: string } | null)?.mapId ?? "smallSkirmish";
+    const mapId =
+      (location.state as { mapId?: string } | null)?.mapId ?? "smallSkirmish";
     loadMap(mapId);
   }, [roomCode, loadMap, location.state]);
 
@@ -135,32 +145,44 @@ export default function Game() {
 
       if (unit) {
         setSelectedProperty(null);
+        setMovePreview(null);
         if (unit.player === gs.currentPlayer) {
           if (isLocal || gs.currentPlayer === playerId) {
             handleSelectUnit(unit);
           }
           return;
         }
-        if (selectedUnit && attackable.some((t) => t.x === x && t.y === y)) {
-          if (isLocal) {
-            const err = engine.attack(selectedUnit.id, unit.id);
-            if (!err) {
-              refreshState();
+        if (selectedUnit) {
+          const currentUnit = engine.getState().units.find(
+            (u) => u.id === selectedUnit.id,
+          );
+          const canAttack =
+            currentUnit &&
+            engine
+              .getAttackableTiles(currentUnit)
+              .some((t) => t.x === x && t.y === y);
+          if (canAttack) {
+            if (isLocal) {
+              const err = engine.attack(selectedUnit.id, unit.id);
+              if (!err) {
+                refreshState();
+                handleSelectUnit(null);
+              }
+            } else {
+              sendAction({
+                type: "attack",
+                attackerId: selectedUnit.id,
+                defenderId: unit.id,
+              });
               handleSelectUnit(null);
             }
-          } else {
-            sendAction({
-              type: "attack",
-              attackerId: selectedUnit.id,
-              defenderId: unit.id,
-            });
-            handleSelectUnit(null);
+            return;
           }
-          return;
         }
       }
 
       if (!selectedUnit) {
+        setMovePreview(null);
         const tile = state.map.tiles[y]?.[x];
         if (
           tile?.property &&
@@ -180,19 +202,28 @@ export default function Game() {
         setSelectedProperty(null);
         const key = y * state.map.width + x;
         if (reachable.has(key)) {
-          if (isLocal) {
-            const err = engine.move(selectedUnit.id, x, y);
-            if (!err) {
-              refreshState();
-              handleSelectUnit(null);
-            }
-          } else {
-            sendAction({ type: "move", unitId: selectedUnit.id, x, y });
-            handleSelectUnit(null);
+          const existing = engine.getUnitAt(x, y);
+          if (!existing) {
+            const path = engine.getPath(selectedUnit, x, y);
+            const attackableFromDest = engine.getAttackableTilesFromPosition(
+              selectedUnit,
+              x,
+              y,
+            );
+            const enemiesFromDest = attackableFromDest
+              .map((t) => engine.getUnitAt(t.x, t.y))
+              .filter((u): u is Unit => !!u);
+            setMovePreview({
+              destination: { x, y },
+              unit: selectedUnit,
+              path,
+              enemiesFromDest,
+            });
           }
           return;
         }
 
+        setMovePreview(null);
         const tile = state.map.tiles[y]?.[x];
         if (
           tile?.property &&
@@ -217,6 +248,7 @@ export default function Game() {
       }
 
       setSelectedProperty(null);
+      setMovePreview(null);
       handleSelectUnit(null);
     },
     [
@@ -240,8 +272,61 @@ export default function Game() {
       sendAction({ type: "end_turn" });
     }
     setSelectedProperty(null);
+    setMovePreview(null);
     handleSelectUnit(null);
   }, [refreshState, handleSelectUnit, isLocal, sendAction]);
+
+  const handleConfirmMove = useCallback(() => {
+    if (!movePreview || !engineRef.current) return;
+    const { destination, unit } = movePreview;
+    if (isLocal) {
+      const err = engineRef.current.move(unit.id, destination.x, destination.y);
+      if (!err) {
+        refreshState();
+        setMovePreview(null);
+        handleSelectUnit(null);
+      }
+    } else {
+      sendAction({
+        type: "move",
+        unitId: unit.id,
+        x: destination.x,
+        y: destination.y,
+      });
+      setMovePreview(null);
+      handleSelectUnit(null);
+    }
+  }, [movePreview, isLocal, refreshState, handleSelectUnit, sendAction]);
+
+  const handleMoveAndAttack = useCallback(() => {
+    if (!movePreview || !engineRef.current) return;
+    const { destination, unit } = movePreview;
+    if (isLocal) {
+      const err = engineRef.current.move(unit.id, destination.x, destination.y);
+      if (!err) {
+        refreshState();
+        setMovePreview(null);
+        const movedUnit = engineRef.current.getUnitAt(
+          destination.x,
+          destination.y,
+        );
+        if (movedUnit) {
+          handleSelectUnit(movedUnit);
+          const attack = engineRef.current.getAttackableTiles(movedUnit);
+          setAttackable(attack);
+        }
+      }
+    } else {
+      sendAction({
+        type: "move",
+        unitId: unit.id,
+        x: destination.x,
+        y: destination.y,
+      });
+      setMovePreview(null);
+      handleSelectUnit(null);
+    }
+  }, [movePreview, isLocal, refreshState, handleSelectUnit, sendAction]);
 
   const handleProduce = useCallback(
     (unitType: string) => {
@@ -311,7 +396,11 @@ export default function Game() {
           title="Victory!"
           open
           footer={[
-            <Button key="again" type="primary" onClick={() => loadMap(mapIdRef.current)}>
+            <Button
+              key="again"
+              type="primary"
+              onClick={() => loadMap(mapIdRef.current)}
+            >
               Play Again
             </Button>,
             <Button key="menu" onClick={handleBack}>
@@ -327,13 +416,23 @@ export default function Game() {
         </Modal>
       )}
 
-      <Flex align="flex-start" gap={16} className={styles.contentContainer}>
+      <Flex
+        align="flex-start"
+        gap={16}
+        className={styles.contentContainer}
+        style={{ position: "relative" }}
+      >
         <div className={styles.mapContainer}>
           <GameMap
             state={state}
             selectedUnit={selectedUnit}
             reachable={reachable}
-            attackable={attackable}
+            attackable={
+              movePreview?.enemiesFromDest?.length
+                ? movePreview.enemiesFromDest.map((u) => ({ x: u.x, y: u.y }))
+                : attackable
+            }
+            movePreview={movePreview}
             tileSize={TILE_SIZE}
             onTapTile={handleTapTile}
             onSelectUnit={handleSelectUnit}
@@ -373,6 +472,29 @@ export default function Game() {
                 : undefined
             }
           />
+        )}
+
+        {movePreview && (
+          <Flex
+            gap={8}
+            style={{
+              position: "absolute",
+              bottom: 16,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 10,
+            }}
+          >
+            <Button type="primary" onClick={handleConfirmMove}>
+              Move
+            </Button>
+            <Button onClick={() => setMovePreview(null)}>Cancel</Button>
+            {movePreview.enemiesFromDest.length > 0 && (
+              <Button type="primary" onClick={handleMoveAndAttack}>
+                Move & Attack
+              </Button>
+            )}
+          </Flex>
         )}
 
         {selectedProperty && (

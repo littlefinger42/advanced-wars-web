@@ -1,4 +1,4 @@
-import type { GameState, GameAction, Unit, MapData } from './types.js';
+import type { GameState, GameAction, Unit, MapData } from "./types.js";
 export declare class GameEngine {
     private state;
     constructor(map: MapData, initialUnits?: Unit[]);
@@ -21,6 +21,14 @@ export declare class GameEngine {
     private checkWinCondition;
     getReachableTiles(unit: Unit): Map<number, number>;
     getAttackableTiles(unit: Unit): {
+        x: number;
+        y: number;
+    }[];
+    getPath(unit: Unit, destX: number, destY: number): {
+        x: number;
+        y: number;
+    }[];
+    getAttackableTilesFromPosition(unit: Unit, fromX: number, fromY: number): {
         x: number;
         y: number;
     }[];

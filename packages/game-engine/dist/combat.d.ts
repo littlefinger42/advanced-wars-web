@@ -1,4 +1,4 @@
-import type { GameState, Unit } from './types.js';
+import type { GameState, Unit } from "./types.js";
 export interface CombatResult {
     attackerDamage: number;
     defenderDamage: number;

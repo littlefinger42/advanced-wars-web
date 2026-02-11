@@ -1,7 +1,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import type { GameState, Unit } from "game-engine";
 import { Flex } from "antd";
-import { Application, Graphics, Container } from "pixi.js";
+import { Application, Graphics, Container, Text } from "pixi.js";
 
 const TERRAIN_COLORS: Record<string, number> = {
   plain: 0x84cc16,
@@ -22,11 +22,18 @@ const TEAM_COLORS: Record<number, number> = {
 
 const NEUTRAL_PROPERTY_COLOR = 0x94a3b8;
 
+interface MovePreview {
+  destination: { x: number; y: number };
+  unit: Unit;
+  path: { x: number; y: number }[];
+}
+
 interface GameMapProps {
   state: GameState;
   selectedUnit: Unit | null;
   reachable: Map<number, number>;
   attackable: { x: number; y: number }[];
+  movePreview: MovePreview | null;
   tileSize: number;
   onTapTile: (x: number, y: number) => void;
   onSelectUnit: (unit: Unit | null) => void;
@@ -37,6 +44,7 @@ export default function GameMap({
   selectedUnit,
   reachable,
   attackable,
+  movePreview,
   tileSize,
   onTapTile,
 }: GameMapProps) {
@@ -56,7 +64,9 @@ export default function GameMap({
     app.renderer.resize(w, h);
 
     const tileLayer = app.stage.getChildByLabel("tileLayer") as Container;
-    const propertyLayer = app.stage.getChildByLabel("propertyLayer") as Container;
+    const propertyLayer = app.stage.getChildByLabel(
+      "propertyLayer",
+    ) as Container;
     const overlayLayer = app.stage.getChildByLabel("overlayLayer") as Container;
     const unitLayer = app.stage.getChildByLabel("unitLayer") as Container;
 
@@ -75,11 +85,15 @@ export default function GameMap({
         const tile = map.tiles[y][x];
         const color = TERRAIN_COLORS[tile.terrain] ?? TERRAIN_COLORS.plain;
 
-        const tileGraphic = new Graphics().rect(x * tileSize, y * tileSize, tileSize, tileSize).fill(color);
+        const tileGraphic = new Graphics()
+          .rect(x * tileSize, y * tileSize, tileSize, tileSize)
+          .fill(color);
         tileLayer.addChild(tileGraphic);
 
         if (tile.property) {
-          const propColor = tile.owner ? TEAM_COLORS[tile.owner] ?? 0x888888 : NEUTRAL_PROPERTY_COLOR;
+          const propColor = tile.owner
+            ? (TEAM_COLORS[tile.owner] ?? 0x888888)
+            : NEUTRAL_PROPERTY_COLOR;
           const cx = x * tileSize + tileSize / 2;
           const cy = y * tileSize + tileSize / 2;
           const size = tileSize * 0.5;
@@ -106,6 +120,22 @@ export default function GameMap({
       }
     }
 
+    if (movePreview && movePreview.path.length >= 2) {
+      const routeGraphic = new Graphics();
+      routeGraphic.moveTo(
+        movePreview.path[0].x * tileSize + tileSize / 2,
+        movePreview.path[0].y * tileSize + tileSize / 2,
+      );
+      for (let i = 1; i < movePreview.path.length; i++) {
+        routeGraphic.lineTo(
+          movePreview.path[i].x * tileSize + tileSize / 2,
+          movePreview.path[i].y * tileSize + tileSize / 2,
+        );
+      }
+      routeGraphic.stroke({ width: 3, color: 0xffffff, alpha: 0.8 });
+      overlayLayer.addChild(routeGraphic);
+    }
+
     for (const unit of units) {
       const teamColor = TEAM_COLORS[unit.player] ?? 0x888888;
       const cx = unit.x * tileSize + tileSize / 2;
@@ -116,11 +146,40 @@ export default function GameMap({
         .circle(cx, cy, radius)
         .fill({ color: teamColor, alpha: unit.hasMoved ? 0.6 : 1 });
       if (selectedUnit?.id === unit.id) {
-        unitGraphic.circle(cx, cy, radius + 2).stroke({ width: 2, color: 0xffffff });
+        unitGraphic
+          .circle(cx, cy, radius + 2)
+          .stroke({ width: 2, color: 0xffffff });
       }
       unitLayer.addChild(unitGraphic);
+
+      if (unit.hp < 100) {
+        const displayHp = Math.ceil(unit.hp / 10);
+        const hpText = new Text({
+          text: String(displayHp),
+          style: {
+            fontFamily: "system-ui, sans-serif",
+            fontSize: Math.max(10, tileSize * 0.3),
+            fill: 0xffffff,
+          },
+        });
+        hpText.anchor.set(1, 0);
+        hpText.x = cx + radius;
+        hpText.y = cy + radius - tileSize * 0.25;
+        unitLayer.addChild(hpText);
+      }
     }
-  }, [state, reachable, attackable, tileSize, selectedUnit]);
+
+    if (movePreview) {
+      const teamColor = TEAM_COLORS[movePreview.unit.player] ?? 0x888888;
+      const cx = movePreview.destination.x * tileSize + tileSize / 2;
+      const cy = movePreview.destination.y * tileSize + tileSize / 2;
+      const radius = tileSize * 0.35;
+      const previewGraphic = new Graphics()
+        .circle(cx, cy, radius)
+        .fill({ color: teamColor, alpha: 0.5 });
+      unitLayer.addChild(previewGraphic);
+    }
+  }, [state, reachable, attackable, movePreview, tileSize, selectedUnit]);
 
   useEffect(() => {
     if (!containerRef.current) return;

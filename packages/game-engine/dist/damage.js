@@ -7,12 +7,13 @@ export function calculateDamage(params) {
     const AV = 100 + atkBoost * 100;
     const DV = 100 + defBoost * 100;
     const DTR = terrainStars;
-    const attackPart = (basePct * 100 * (AV / 100) + luck) / 100;
+    const attackPart = (basePct * (AV / 100) + luck / 100);
     const defensePart = Math.max(0, (200 - (DV + DTR * defenderHp)) / 100);
     const hpPart = attackerHp / 10;
     let damage = attackPart * hpPart * defensePart;
-    damage = Math.round(damage * 20) / 20;
-    damage = Math.floor(damage);
+    damage = Math.max(0, damage);
+    damage = Math.ceil(damage * 20) / 20;
+    damage = Math.floor(damage * 100);
     return Math.max(0, Math.min(100, damage));
 }
 export function calculateDamagePreview(params) {
