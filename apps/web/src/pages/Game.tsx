@@ -153,9 +153,9 @@ export default function Game() {
           return;
         }
         if (selectedUnit) {
-          const currentUnit = engine.getState().units.find(
-            (u) => u.id === selectedUnit.id,
-          );
+          const currentUnit = engine
+            .getState()
+            .units.find((u) => u.id === selectedUnit.id);
           const canAttack =
             currentUnit &&
             engine

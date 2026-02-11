@@ -2,25 +2,11 @@ import { useRef, useEffect, useCallback } from "react";
 import type { GameState, Unit } from "game-engine";
 import { Flex } from "antd";
 import { Application, Graphics, Container, Text } from "pixi.js";
-
-const TERRAIN_COLORS: Record<string, number> = {
-  plain: 0x84cc16,
-  mountain: 0x78716c,
-  woods: 0x166534,
-  river: 0x0369a1,
-  road: 0x6b7280,
-  sea: 0x075985,
-  shoal: 0xfcd34d,
-  reef: 0x64748b,
-  pipe: 0x475569,
-};
-
-const TEAM_COLORS: Record<number, number> = {
-  1: 0x3b82f6,
-  2: 0xef4444,
-};
-
-const NEUTRAL_PROPERTY_COLOR = 0x94a3b8;
+import {
+  renderPropertySprite,
+  renderTerrainSprite,
+  renderUnitSprite,
+} from "../lib/sprites";
 
 interface MovePreview {
   destination: { x: number; y: number };
@@ -83,25 +69,14 @@ export default function GameMap({
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
         const tile = map.tiles[y][x];
-        const color = TERRAIN_COLORS[tile.terrain] ?? TERRAIN_COLORS.plain;
-
-        const tileGraphic = new Graphics()
-          .rect(x * tileSize, y * tileSize, tileSize, tileSize)
-          .fill(color);
-        tileLayer.addChild(tileGraphic);
+        const tileSprite = renderTerrainSprite(tile.terrain, tileSize);
+        tileSprite.position.set(x * tileSize, y * tileSize);
+        tileLayer.addChild(tileSprite);
 
         if (tile.property) {
-          const propColor = tile.owner
-            ? (TEAM_COLORS[tile.owner] ?? 0x888888)
-            : NEUTRAL_PROPERTY_COLOR;
-          const cx = x * tileSize + tileSize / 2;
-          const cy = y * tileSize + tileSize / 2;
-          const size = tileSize * 0.5;
-          const building = new Graphics()
-            .rect(cx - size / 2, cy - size / 2, size, size)
-            .fill(propColor)
-            .stroke({ width: 2, color: 0x1e293b });
-          propertyLayer.addChild(building);
+          const propertySprite = renderPropertySprite(tile.property, tile.owner, tileSize);
+          propertySprite.position.set(x * tileSize, y * tileSize);
+          propertyLayer.addChild(propertySprite);
         }
 
         const key = y * map.width + x;
@@ -137,20 +112,11 @@ export default function GameMap({
     }
 
     for (const unit of units) {
-      const teamColor = TEAM_COLORS[unit.player] ?? 0x888888;
-      const cx = unit.x * tileSize + tileSize / 2;
-      const cy = unit.y * tileSize + tileSize / 2;
-      const radius = tileSize * 0.35;
-
-      const unitGraphic = new Graphics()
-        .circle(cx, cy, radius)
-        .fill({ color: teamColor, alpha: unit.hasMoved ? 0.6 : 1 });
-      if (selectedUnit?.id === unit.id) {
-        unitGraphic
-          .circle(cx, cy, radius + 2)
-          .stroke({ width: 2, color: 0xffffff });
-      }
-      unitLayer.addChild(unitGraphic);
+      const unitSprite = renderUnitSprite(unit, tileSize, {
+        selected: selectedUnit?.id === unit.id,
+      });
+      unitSprite.position.set(unit.x * tileSize, unit.y * tileSize);
+      unitLayer.addChild(unitSprite);
 
       if (unit.hp < 100) {
         const displayHp = Math.ceil(unit.hp / 10);
@@ -163,21 +129,21 @@ export default function GameMap({
           },
         });
         hpText.anchor.set(1, 0);
-        hpText.x = cx + radius;
-        hpText.y = cy + radius - tileSize * 0.25;
+        hpText.x = (unit.x + 1) * tileSize - 2;
+        hpText.y = unit.y * tileSize + 2;
         unitLayer.addChild(hpText);
       }
     }
 
     if (movePreview) {
-      const teamColor = TEAM_COLORS[movePreview.unit.player] ?? 0x888888;
-      const cx = movePreview.destination.x * tileSize + tileSize / 2;
-      const cy = movePreview.destination.y * tileSize + tileSize / 2;
-      const radius = tileSize * 0.35;
-      const previewGraphic = new Graphics()
-        .circle(cx, cy, radius)
-        .fill({ color: teamColor, alpha: 0.5 });
-      unitLayer.addChild(previewGraphic);
+      const previewSprite = renderUnitSprite(movePreview.unit, tileSize, {
+        ghost: true,
+      });
+      previewSprite.position.set(
+        movePreview.destination.x * tileSize,
+        movePreview.destination.y * tileSize,
+      );
+      unitLayer.addChild(previewSprite);
     }
   }, [state, reachable, attackable, movePreview, tileSize, selectedUnit]);
 
