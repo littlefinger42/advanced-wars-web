@@ -4,6 +4,18 @@ import { getTeamColors } from './helpers/teamColors.js'
 import { TERRAIN_SPRITES } from './sprites/terrainSprites.js'
 import { PROPERTY_SPRITES } from './sprites/propertySprites.js'
 
+function getPropertyPalette(basePalette: string[], owner: number | null): string[] {
+  if (!owner) return basePalette
+
+  const team = getTeamColors(owner)
+  const tinted = [...basePalette]
+  if (tinted.length > 1) tinted[1] = team.shadow
+  if (tinted.length > 2) tinted[2] = team.primary
+  if (tinted.length > 3) tinted[3] = team.highlight
+  if (tinted.length > 4) tinted[4] = team.primary
+  return tinted
+}
+
 export function drawTerrain(
   ctx: CanvasRenderingContext2D,
   tile: { terrain: string; property: string | null; owner: number | null },
@@ -22,14 +34,8 @@ export function drawTerrain(
   if (tile.property) {
     const propData = PROPERTY_SPRITES[tile.property]
     if (propData) {
-      drawSprite(ctx, propData.grid, propData.pal, dx, dy, scale)
+      const palette = getPropertyPalette(propData.pal, tile.owner)
+      drawSprite(ctx, propData.grid, palette, dx, dy, scale)
     }
-  }
-
-  if (tile.owner) {
-    const team = getTeamColors(tile.owner)
-    ctx.strokeStyle = team.primary
-    ctx.lineWidth = 2
-    ctx.strokeRect(dx + 1, dy + 1, tileSize - 2, tileSize - 2)
   }
 }

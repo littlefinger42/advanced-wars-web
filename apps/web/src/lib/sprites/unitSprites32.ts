@@ -7,7 +7,6 @@ import {
   fillRect,
   mirrorHorizontal,
   setPixel,
-  strokeRect,
 } from '../helpers/spriteBuilder.js'
 
 function makeInfantry(): SpriteGrid {
@@ -41,7 +40,6 @@ function makeVehicleBody(bodyW: number, bodyH: number, topY: number): SpriteGrid
   const g = createGrid(32, 0)
   const x = Math.floor((32 - bodyW) / 2)
   fillRect(g, x, topY, bodyW, bodyH, 1)
-  strokeRect(g, x, topY, bodyW, bodyH, 2)
   fillRect(g, x - 2, topY + bodyH - 4, bodyW + 4, 4, 7)
   for (let tx = x; tx < x + bodyW; tx += 4) setPixel(g, tx, topY + bodyH - 2, 4)
   return g
@@ -104,7 +102,6 @@ function makeArtillery(rocket = false, missiles = false): SpriteGrid {
 function makeBattleship(): SpriteGrid {
   const g = createGrid(32, 0)
   fillRect(g, 4, 16, 24, 10, 1)
-  strokeRect(g, 4, 16, 24, 10, 2)
   fillRect(g, 9, 12, 14, 5, 4)
   fillRect(g, 11, 10, 3, 3, 8)
   fillRect(g, 18, 10, 3, 3, 8)
@@ -117,7 +114,6 @@ function makeBattleship(): SpriteGrid {
 function makeSub(): SpriteGrid {
   const g = createGrid(32, 0)
   fillRect(g, 6, 15, 20, 8, 4)
-  strokeRect(g, 6, 15, 20, 8, 5)
   fillRect(g, 13, 11, 6, 4, 1)
   fillRect(g, 15, 8, 2, 3, 1)
   setPixel(g, 16, 7, 9)
@@ -128,7 +124,6 @@ function makeSub(): SpriteGrid {
 function makeCruiser(): SpriteGrid {
   const g = createGrid(32, 0)
   fillRect(g, 5, 16, 22, 9, 1)
-  strokeRect(g, 5, 16, 22, 9, 2)
   fillRect(g, 10, 12, 10, 5, 4)
   fillRect(g, 12, 10, 6, 2, 8)
   drawHLine(g, 18, 29, 13, 4)
@@ -139,7 +134,6 @@ function makeCruiser(): SpriteGrid {
 function makeLander(): SpriteGrid {
   const g = createGrid(32, 0)
   fillRect(g, 4, 17, 24, 8, 4)
-  strokeRect(g, 4, 17, 24, 8, 5)
   fillRect(g, 10, 14, 12, 4, 1)
   fillRect(g, 13, 12, 6, 2, 8)
   fillRect(g, 11, 22, 10, 3, 3)

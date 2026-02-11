@@ -4,7 +4,6 @@ import {
   drawHLine,
   drawVLine,
   fillRect,
-  strokeRect,
 } from '../helpers/spriteBuilder.js'
 
 const HQ_PAL: string[] = ['', '#991b1b', '#ef4444', '#fca5a5', '#fde68a']
@@ -16,7 +15,6 @@ const PORT_PAL: string[] = ['', '#0c4a6e', '#0ea5e9', '#7dd3fc', '#6b7280']
 function makeBuilding(roof: number, wall: number, detail: number, accent: number): SpriteGrid {
   const g = createGrid(32, 0)
   fillRect(g, 6, 10, 20, 18, wall)
-  strokeRect(g, 6, 10, 20, 18, roof)
   fillRect(g, 8, 12, 16, 5, roof)
   fillRect(g, 13, 21, 6, 7, detail)
   fillRect(g, 9, 19, 4, 4, detail)
@@ -42,8 +40,6 @@ function makeCity(): SpriteGrid {
   fillRect(g, 22, 15, 3, 3, 3)
   fillRect(g, 17, 20, 3, 3, 3)
   fillRect(g, 22, 20, 3, 3, 3)
-  strokeRect(g, 5, 13, 9, 15, 4)
-  strokeRect(g, 14, 10, 13, 18, 4)
   return g
 }
 
@@ -59,11 +55,9 @@ function makeBase(): SpriteGrid {
 function makeAirport(): SpriteGrid {
   const g = createGrid(32, 0)
   fillRect(g, 3, 17, 26, 10, 2)
-  strokeRect(g, 3, 17, 26, 10, 1)
   drawHLine(g, 6, 26, 22, 3)
   drawVLine(g, 16, 12, 27, 3)
   fillRect(g, 12, 9, 9, 8, 4)
-  strokeRect(g, 12, 9, 9, 8, 1)
   return g
 }
 
@@ -71,7 +65,6 @@ function makePort(): SpriteGrid {
   const g = createGrid(32, 0)
   fillRect(g, 0, 20, 32, 12, 3)
   fillRect(g, 4, 13, 17, 12, 2)
-  strokeRect(g, 4, 13, 17, 12, 1)
   fillRect(g, 21, 11, 3, 14, 4)
   fillRect(g, 24, 11, 2, 2, 4)
   drawHLine(g, 6, 18, 18, 4)

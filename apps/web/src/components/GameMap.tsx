@@ -70,13 +70,15 @@ export default function GameMap({
     }
 
     for (const unit of units) {
+      const isImmobile = unit.hasMoved
       drawUnit(
         ctx,
         unit,
         unit.x,
         unit.y,
         tileSize,
-        selectedUnit?.id === unit.id
+        selectedUnit?.id === unit.id,
+        isImmobile
       )
     }
   }, [state, reachable, attackable, tileSize, selectedUnit])

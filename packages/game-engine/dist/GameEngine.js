@@ -68,11 +68,11 @@ export class GameEngine {
         if (this.state.winner)
             return;
         this.state.currentPlayer = this.state.currentPlayer === 1 ? 2 : 1;
+        this.resetUnitFlags();
         if (this.state.currentPlayer === 1) {
             this.state.turn++;
             this.state.day++;
             this.processIncome();
-            this.resetUnitFlags();
         }
         this.state.phase = 'move';
     }
