@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react'
 import type { GameState, Unit } from 'game-engine'
-import { getUnitDefinition } from 'game-engine'
+import { drawTerrain, drawUnit } from '../lib/pixelSprites'
 import styles from './GameMap.module.css'
 
 interface GameMapProps {
@@ -11,26 +11,6 @@ interface GameMapProps {
   tileSize: number
   onTapTile: (x: number, y: number) => void
   onSelectUnit: (unit: Unit | null) => void
-}
-
-const TERRAIN_COLORS: Record<string, string> = {
-  plain: '#a7c957',
-  mountain: '#8b7355',
-  woods: '#2d6a4f',
-  river: '#48cae4',
-  road: '#6c757d',
-  sea: '#0284c7',
-  shoal: '#7dd3fc',
-  reef: '#0ea5e9',
-  pipe: '#475569',
-}
-
-const PROPERTY_COLORS: Record<string, string> = {
-  hq: '#dc2626',
-  city: '#eab308',
-  base: '#b45309',
-  airport: '#0d9488',
-  port: '#0369a1',
 }
 
 export default function GameMap({
@@ -66,19 +46,17 @@ export default function GameMap({
         const tile = map.tiles[y][x]
         const key = y * map.width + x
 
-        let color = TERRAIN_COLORS[tile.terrain] ?? '#94a3b8'
-        if (tile.property) {
-          color = PROPERTY_COLORS[tile.property] ?? color
-        }
-
-        ctx.fillStyle = color
-        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize)
-
-        if (tile.owner) {
-          ctx.strokeStyle = tile.owner === 1 ? '#e63946' : '#1d3557'
-          ctx.lineWidth = 2
-          ctx.strokeRect(x * tileSize + 1, y * tileSize + 1, tileSize - 2, tileSize - 2)
-        }
+        drawTerrain(
+          ctx,
+          {
+            terrain: tile.terrain,
+            property: tile.property,
+            owner: tile.owner,
+          },
+          x,
+          y,
+          tileSize
+        )
 
         if (reachSet.has(key) && !attackSet.has(`${x},${y}`)) {
           ctx.fillStyle = 'rgba(59, 130, 246, 0.4)'
@@ -92,44 +70,14 @@ export default function GameMap({
     }
 
     for (const unit of units) {
-      const def = getUnitDefinition(unit.type)
-      const color = unit.player === 1 ? '#e63946' : '#1d3557'
-      ctx.fillStyle = color
-      ctx.fillRect(
-        unit.x * tileSize + 4,
-        unit.y * tileSize + 4,
-        tileSize - 8,
-        tileSize - 8
+      drawUnit(
+        ctx,
+        unit,
+        unit.x,
+        unit.y,
+        tileSize,
+        selectedUnit?.id === unit.id
       )
-
-      ctx.strokeStyle = selectedUnit?.id === unit.id ? '#fbbf24' : '#fff'
-      ctx.lineWidth = selectedUnit?.id === unit.id ? 3 : 1
-      ctx.strokeRect(
-        unit.x * tileSize + 4,
-        unit.y * tileSize + 4,
-        tileSize - 8,
-        tileSize - 8
-      )
-
-      ctx.fillStyle = '#fff'
-      ctx.font = `bold ${tileSize / 2}px sans-serif`
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(
-        unit.hp.toString(),
-        unit.x * tileSize + tileSize / 2,
-        unit.y * tileSize + tileSize / 2
-      )
-
-      if (def) {
-        ctx.fillStyle = 'rgba(0,0,0,0.6)'
-        ctx.font = `${tileSize / 4}px sans-serif`
-        ctx.fillText(
-          def.name.slice(0, 4),
-          unit.x * tileSize + tileSize / 2,
-          unit.y * tileSize + tileSize - 6
-        )
-      }
     }
   }, [state, reachable, attackable, tileSize, selectedUnit])
 
