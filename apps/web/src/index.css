@@ -1,0 +1,15 @@
+:root {
+  --color-p1: #e63946;
+  --color-p2: #1d3557;
+  --color-plain: #a7c957;
+  --color-road: #6c757d;
+  --color-woods: #2d6a4f;
+  --color-mountain: #8b7355;
+  --color-water: #48cae4;
+  --color-city: #e9c46a;
+  --color-base: #bc6c25;
+}
+
+body {
+  touch-action: pan-x pan-y pinch-zoom;
+}
