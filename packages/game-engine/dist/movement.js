@@ -62,24 +62,12 @@ export function getAttackRange(unit, map) {
     }
     return tiles;
 }
-export function getAttackableTiles(map, unit, units, reachable, isIndirect) {
+export function getAttackableTiles(map, unit, units) {
     const def = getUnitDefinition(unit.type);
     if (!def)
         return [];
     const enemies = units.filter((u) => u.player !== unit.player);
     const enemyPos = new Set(enemies.map((u) => `${u.x},${u.y}`));
-    if (isIndirect) {
-        const rangeTiles = getAttackRange(unit, map);
-        return rangeTiles.filter((t) => enemyPos.has(`${t.x},${t.y}`));
-    }
-    const attackable = [];
     const rangeTiles = getAttackRange(unit, map);
-    for (const t of rangeTiles) {
-        if (!enemyPos.has(`${t.x},${t.y}`))
-            continue;
-        const key = t.y * map.width + t.x;
-        if (reachable.has(key))
-            attackable.push(t);
-    }
-    return attackable;
+    return rangeTiles.filter((t) => enemyPos.has(`${t.x},${t.y}`));
 }

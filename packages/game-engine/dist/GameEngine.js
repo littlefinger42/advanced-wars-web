@@ -120,7 +120,7 @@ export class GameEngine {
         if (def.ammo > 0 && attacker.ammo <= 0)
             return 'No ammo';
         const reachable = getReachableTiles(this.state.map, attacker, this.state.units, this.state.weather);
-        const attackable = getAttackableTiles(this.state.map, attacker, this.state.units, reachable, def.isIndirect);
+        const attackable = getAttackableTiles(this.state.map, attacker, this.state.units);
         const canAttackPos = attackable.some((t) => t.x === defender.x && t.y === defender.y);
         if (!canAttackPos)
             return 'Target out of range';
@@ -265,10 +265,6 @@ export class GameEngine {
         return getReachableTiles(this.state.map, unit, this.state.units, this.state.weather);
     }
     getAttackableTiles(unit) {
-        const def = getUnitDefinition(unit.type);
-        if (!def)
-            return [];
-        const reachable = this.getReachableTiles(unit);
-        return getAttackableTiles(this.state.map, unit, this.state.units, reachable, def.isIndirect);
+        return getAttackableTiles(this.state.map, unit, this.state.units);
     }
 }

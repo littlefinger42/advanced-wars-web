@@ -145,9 +145,7 @@ export class GameEngine {
     const attackable = getAttackableTiles(
       this.state.map,
       attacker,
-      this.state.units,
-      reachable,
-      def.isIndirect
+      this.state.units
     )
 
     const canAttackPos = attackable.some((t) => t.x === defender.x && t.y === defender.y)
@@ -313,15 +311,10 @@ export class GameEngine {
   }
 
   getAttackableTiles(unit: Unit): { x: number; y: number }[] {
-    const def = getUnitDefinition(unit.type)
-    if (!def) return []
-    const reachable = this.getReachableTiles(unit)
     return getAttackableTiles(
       this.state.map,
       unit,
-      this.state.units,
-      reachable,
-      def.isIndirect
+      this.state.units
     )
   }
 }

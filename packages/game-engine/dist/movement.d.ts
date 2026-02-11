@@ -4,7 +4,7 @@ export declare function getAttackRange(unit: Unit, map: MapData): {
     x: number;
     y: number;
 }[];
-export declare function getAttackableTiles(map: MapData, unit: Unit, units: Unit[], reachable: Map<number, number>, isIndirect: boolean): {
+export declare function getAttackableTiles(map: MapData, unit: Unit, units: Unit[]): {
     x: number;
     y: number;
 }[];

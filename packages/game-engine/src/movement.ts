@@ -83,9 +83,7 @@ export function getAttackRange(
 export function getAttackableTiles(
   map: MapData,
   unit: Unit,
-  units: Unit[],
-  reachable: Map<number, number>,
-  isIndirect: boolean
+  units: Unit[]
 ): { x: number; y: number }[] {
   const def = getUnitDefinition(unit.type)
   if (!def) return []
@@ -93,19 +91,6 @@ export function getAttackableTiles(
   const enemies = units.filter((u) => u.player !== unit.player)
   const enemyPos = new Set(enemies.map((u) => `${u.x},${u.y}`))
 
-  if (isIndirect) {
-    const rangeTiles = getAttackRange(unit, map)
-    return rangeTiles.filter((t) => enemyPos.has(`${t.x},${t.y}`))
-  }
-
-  const attackable: { x: number; y: number }[] = []
   const rangeTiles = getAttackRange(unit, map)
-
-  for (const t of rangeTiles) {
-    if (!enemyPos.has(`${t.x},${t.y}`)) continue
-    const key = t.y * map.width + t.x
-    if (reachable.has(key)) attackable.push(t)
-  }
-
-  return attackable
+  return rangeTiles.filter((t) => enemyPos.has(`${t.x},${t.y}`))
 }
